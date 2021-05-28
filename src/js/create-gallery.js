@@ -1,122 +1,94 @@
-import gallery from './gallery-items.js';
+import gallery from "./gallery-items.js";
 
-const counter = (startIndex = 0) => {
-  let index = startIndex - 1;
 
-  return (incr = 1) => (index += incr);
-};
+const imgGallery = document.querySelector('.js-gallery');
+const lightBox = document.querySelector('.js-lightbox');
+const lightboxOverlay = document.querySelector('.lightbox__overlay');
+const lightboxImage = document.querySelector('.lightbox__image');
+const lightboxbutton = document.querySelector('button[data-action="close-lightbox"]');
+let currentImg;
 
-const imageCounter = counter(0);
+function createImagesListMarckup(items) {
+  return items.map(({ preview, original, description }) =>{
+    return `
+<li class="gallery__item">
+  <a
+    class="gallery__link"
+    href="${original}"
+  >
+    <img
+      class="gallery__image"
+      src="${preview}"
+      data-source="${original}"
+      alt="${description}"
+    />
+  </a>
+</li>
+    `;}).join(' ');
+}
 
-const makeGalleryItemMarkup = ({ preview, original, description }) => {
-  return `<li class="gallery__item">
-            <a class="gallery__link" href="${original}">
-              <img
-                class="gallery__image"
-                src="${preview}"
-                data-source="${original}"
-                data-index="${imageCounter(1)}"
-                alt="${description}"
-              />
-            </a>
-          </li>`;
-};
+const imagesPattern = createImagesListMarckup(gallery);
+imgGallery.insertAdjacentHTML('beforeend', imagesPattern);
 
-const LightBoxOpen = photoIndex => {
-  const currentPhoto = refs.gallery.querySelector(
-    `[data-index="${photoIndex}"]`,
-  );
+imgGallery.addEventListener('click', onImagesClick);
+lightboxbutton.addEventListener('click', onCloseModal);
 
-  refs.lightBox.classList.add('is-open');
-  refs.lightBox.dataset.index = photoIndex;
+lightboxOverlay.addEventListener("click", () => onCloseModal());
 
-  refs.lightBoxImg.src = currentPhoto.dataset.source;
-  refs.lightBoxImg.alt = currentPhoto.alt;
+ 
 
-  window.addEventListener('keydown', onKeyPressed);
-  refs.lightBoxCloseBtn.addEventListener('click', LightBoxClose);
-  refs.lightBoxOverlay.addEventListener('click', LightBoxClose);
-};
-
-const LightBoxClose = () => {
-  refs.lightBox.classList.remove('is-open');
-  refs.lightBox.removeAttribute('data-index');
-
-  refs.lightBoxImg.src = '';
-  refs.lightBoxImg.alt = '';
-
-  window.removeEventListener('keydown', onKeyPressed);
-  refs.lightBoxCloseBtn.removeEventListener('click', LightBoxClose);
-  refs.lightBoxOverlay.removeEventListener('click', LightBoxClose);
-};
-
-const LightBoxImageSwipe = offset => {
-  let nextIndex = Number(refs.lightBox.dataset.index) + offset;
-
-  if (nextIndex < 0) {
-    nextIndex = imageCounter(0);
-  }
-  if (nextIndex > imageCounter(0)) {
-    nextIndex = 0;
-  }
-
-  refs.lightBox.dataset.index = nextIndex;
-  const nextPhoto = refs.gallery.querySelector(`[data-index="${nextIndex}"]`);
-  refs.lightBoxImg.src = nextPhoto.dataset.source;
-  refs.lightBoxImg.alt = nextPhoto.alt;
-};
-
-const onPhotoClick = event => {
+function onImagesClick(event) {
+  console.log(event.target);
   event.preventDefault();
-
-  const targetPhoto = event.target;
-  if (!targetPhoto.classList.contains('gallery__image')) {
+  if (event.target.nodeName !== "IMG") {
     return;
   }
 
-  LightBoxOpen(targetPhoto.dataset.index);
+  currentImg = event.target;
+  
+
+  lightBox.classList.add('is-open');
+  addLightboxContent(currentImg);
+   document.addEventListener("keydown", onEscKeyPress);
+  document.addEventListener("keyup", imageArrowsFlipping);
+  
 };
 
-const onKeyPressed = event => {
-  if (
-    event.key !== 'Escape' &&
-    event.key !== 'ArrowLeft' &&
-    event.key !== 'ArrowRight'
-  ) {
-    return;
+function onCloseModal() {
+  lightBox.classList.remove("is-open");
+  document.removeEventListener("keydown", onEscKeyPress);
+  document.removeEventListener("keyup", imageArrowsFlipping);
+}
+function addLightboxContent(event) {
+  lightboxImage.src = event.dataset.source;
+  lightboxImage.alt = event.getAttribute('alt');
+}
+
+function onEscKeyPress(e) {
+  const ESC_KEY_CODE = "Escape";
+  if (e.code === ESC_KEY_CODE) {
+    onCloseModal();
   }
+}
 
-  let offset;
+function imageArrowsFlipping(e) {
+  const parrent = currentImg.closest("li");
 
-  switch (event.key) {
-    case 'Escape':
-      LightBoxClose();
-      return;
-
-    case 'ArrowRight':
-      offset = 1;
-      LightBoxImageSwipe(offset);
-      return;
-
-    case 'ArrowLeft':
-      offset = -1;
-      LightBoxImageSwipe(offset);
-      return;
+  if (e.code === "ArrowRight") {
+    onNextKeyPress(parrent);
+  } else if (e.code === "ArrowLeft") {
+    onPrevKeyPress(parrent);
   }
-};
+}
 
-const refs = {
-  gallery: document.querySelector('.js-gallery'),
-  lightBox: document.querySelector('.js-lightbox'),
-  lightBoxOverlay: document.querySelector('.js-lightbox .lightbox__overlay'),
-  lightBoxImg: document.querySelector('.js-lightbox .lightbox__image'),
-  lightBoxCloseBtn: document.querySelector(
-    '.js-lightbox button[data-action="close-lightbox"]',
-  ),
-};
+function onNextKeyPress(parrent) {
+  currentImg = parrent.nextElementSibling.querySelector("img");
+  addLightboxContent(currentImg);
+}
 
-const galleryMarkup = gallery.map(item => makeGalleryItemMarkup(item)).join('');
+function onPrevKeyPress(parrent) {
+  currentImg = parrent.previousElementSibling.querySelector("img");
+  addLightboxContent(currentImg);
+}
 
-refs.gallery.insertAdjacentHTML('afterbegin', galleryMarkup);
-
-refs.gallery.addEventListener('click', onPhotoClick);
+  
