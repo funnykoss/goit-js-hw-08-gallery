@@ -50,14 +50,14 @@ function onImagesClick(event) {
   lightBox.classList.add('is-open');
   addLightboxContent(currentImg);
    document.addEventListener("keydown", onEscKeyPress);
-  document.addEventListener("keyup", imageArrowsFlipping);
+  
   
 };
 
 function onCloseModal() {
   lightBox.classList.remove("is-open");
   document.removeEventListener("keydown", onEscKeyPress);
-  document.removeEventListener("keyup", imageArrowsFlipping);
+  
 }
 function addLightboxContent(event) {
   lightboxImage.src = event.dataset.source;
@@ -71,24 +71,49 @@ function onEscKeyPress(e) {
   }
 }
 
-function imageArrowsFlipping(e) {
-  const parrent = currentImg.closest("li");
+// function imageArrowsFlipping(e) {
+//   const parrent = currentImg.closest("li");
 
-  if (e.code === "ArrowRight") {
-    onNextKeyPress(parrent);
-  } else if (e.code === "ArrowLeft") {
-    onPrevKeyPress(parrent);
+//   if (e.code === "ArrowRight") {
+//     onNextKeyPress(parrent);
+//   } else if (e.code === "ArrowLeft") {
+//     onPrevKeyPress(parrent);
+//   }
+// }
+
+// function onNextKeyPress(parrent) {
+//   currentImg = parrent.nextElementSibling.querySelector("img");
+//   addLightboxContent(currentImg);
+// }
+
+// function onPrevKeyPress(parrent) {
+//   currentImg = parrent.previousElementSibling.querySelector("img");
+//   addLightboxContent(currentImg);
+// }
+
+
+document.addEventListener('keydown', imageArrowsFlipping);
+
+function imageArrowsFlipping(event) {
+const imagesList  = document.querySelectorAll('.gallery__image');
+ 
+  const arrayGallery = [];
+  imagesList.forEach(el => {
+    arrayGallery.push(el.getAttribute('data-source'));
+  });
+  
+  let newIndex;
+  const currentId = arrayGallery.indexOf(lightboxImage.src);
+  if (event.key === 'ArrowLeft') {
+    if (newIndex == -1) {
+      newIndex = arrayGallery.length - 1;
+    }
+  } else if (event.key === 'ArrowRight') {
+    newIndex = currentId + 1;
+    if (newIndex === arrayGallery.length) {
+      newIndex = 0;
+    }
   }
-}
-
-function onNextKeyPress(parrent) {
-  currentImg = parrent.nextElementSibling.querySelector("img");
-  addLightboxContent(currentImg);
-}
-
-function onPrevKeyPress(parrent) {
-  currentImg = parrent.previousElementSibling.querySelector("img");
-  addLightboxContent(currentImg);
-}
-
+lightboxImage.src = arrayGallery[newIndex];
+};
   
